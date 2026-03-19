@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PropIQ — Deal Analyzer</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f4f2ed;
+  --surface:#ffffff;
+  --card:#faf9f6;
+  --border:#e0dbd2;
+  --border-dark:#c4bdb4;
+  --accent:#1a3a2a;
+  --accent2:#2d5a3d;
+  --accent-light:#e8f0eb;
+  --blue-dark:#1e3260;
+  --blue-light:#eef1f9;
+  --gold:#9a6f09;
+  --gold-light:#fdf6e3;
+  --text:#1c1a16;
+  --text-muted:#645d54;
+  --text-dim:#a09890;
+  --danger:#b83232;
+  --danger-light:#fdf0ee;
+  --warn:#8a6200;
+  --warn-light:#fdf6e3;
+  --good:#1a5232;
+  --good-light:#eaf4ee;
+  --font-display:'Playfair Display',Georgia,serif;
+  --font-sans:'IBM Plex Sans',system-ui,sans-serif;
+  --font-mono:'IBM Plex Mono',monospace;
+  --r:8px;--r-lg:14px;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-height:100vh;font-size:14px;line-height:1.5;}
+
+/* ── LOGIN ── */
+#loginScreen{position:fixed;inset:0;background:var(--accent);display:flex;align-items:center;justify-content:center;z-index:1000;padding:1.5rem;}
+.login-box{background:#fff;border-radius:20px;padding:2.5rem 2rem;width:100%;max-width:360px;text-align:center;}
+.login-logo{font-family:var(--font-display);font-size:2rem;color:var(--accent);margin-bottom:0.25rem;}
+.login-sub{font-size:0.7rem;color:var(--text-dim);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:2rem;}
+.login-box input{width:100%;padding:0.75rem 1rem;border:1.5px solid var(--border);border-radius:var(--r);font-size:1rem;font-family:var(--font-sans);text-align:center;letter-spacing:0.1em;margin-bottom:0.75rem;}
+.login-box input:focus{outline:none;border-color:var(--accent);}
+.login-btn{width:100%;padding:0.8rem;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font-family:var(--font-sans);font-size:0.85rem;font-weight:600;cursor:pointer;letter-spacing:0.08em;text-transform:uppercase;}
+.login-btn:hover{background:var(--accent2);}
+.login-err{color:var(--danger);font-size:0.75rem;margin-top:0.5rem;display:none;}
+
+/* ── HEADER ── */
+header{background:var(--accent);padding:0 1.25rem;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:100;}
+.logo{font-family:var(--font-display);font-size:1.25rem;color:#fff;}
+.logo-sub{color:#9bcca8;font-size:0.62rem;font-family:var(--font-sans);font-weight:300;letter-spacing:0.12em;text-transform:uppercase;margin-left:0.5rem;}
+.header-right{display:flex;align-items:center;gap:0.75rem;}
+.nav-btn{background:rgba(255,255,255,0.12);border:none;color:#fff;font-family:var(--font-sans);font-size:0.68rem;font-weight:500;padding:0.35rem 0.75rem;border-radius:100px;cursor:pointer;letter-spacing:0.06em;transition:background 0.15s;}
+.nav-btn:hover{background:rgba(255,255,255,0.2);}
+.nav-btn.active{background:rgba(255,255,255,0.25);}
+
+/* ── STAGE NAV ── */
+.stage-nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 1.25rem;display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.stage-tab{padding:0.8rem 1.1rem;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border:none;background:none;color:var(--text-dim);border-bottom:2.5px solid transparent;transition:all 0.18s;font-family:var(--font-sans);display:flex;align-items:center;gap:0.35rem;white-space:nowrap;flex-shrink:0;}
+.stage-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.s-num{width:17px;height:17px;border-radius:50%;font-size:0.58rem;font-weight:700;display:flex;align-items:center;justify-content:center;background:var(--border);color:var(--text-dim);transition:all 0.18s;flex-shrink:0;}
+.stage-tab.active .s-num{background:var(--accent);color:#fff;}
+
+/* ── PAGES ── */
+.page{display:none;max-width:1100px;margin:0 auto;padding:1.25rem;}
+.page.active{display:block;}
+
+/* ── SECTION HEAD ── */
+.section-head{margin-bottom:1.25rem;}
+.section-title{font-family:var(--font-display);font-size:1.2rem;color:var(--accent);margin-bottom:0.15rem;}
+.section-sub{font-size:0.72rem;color:var(--text-muted);}
+
+/* ── CARD ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:1.1rem 1.25rem;margin-bottom:1.1rem;}
+.card:last-child{margin-bottom:0;}
+.card-title{font-size:0.58rem;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.85rem;padding-bottom:0.55rem;border-bottom:1px solid var(--border);}
+
+/* ── LAYOUT ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;}
+@media(max-width:680px){.two-col{grid-template-columns:1fr;}}
+
+/* ── FORM ── */
+.fg{display:flex;flex-direction:column;gap:0.25rem;margin-bottom:0.65rem;}
+.fg label{font-size:0.6rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);}
+input[type=text],input[type=number],select,textarea{background:var(--card);border:1px solid var(--border);color:var(--text);font-family:var(--font-sans);font-size:0.84rem;padding:0.48rem 0.75rem;border-radius:var(--r);width:100%;transition:border-color 0.15s;-webkit-appearance:none;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent2);box-shadow:0 0 0 3px rgba(45,90,61,0.09);}
+textarea{resize:vertical;min-height:68px;line-height:1.55;}
+select{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23a09890'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;padding-right:2rem;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:0.65rem;}
+.form-row.three{grid-template-columns:1fr 1fr 1fr;}
+.form-row.four{grid-template-columns:1fr 1fr 1fr 1fr;}
+@media(max-width:480px){.form-row,.form-row.three,.form-row.four{grid-template-columns:1fr 1fr;}}
+.prefix-wrap{position:relative;}
+.prefix-wrap .pfx{position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);color:var(--text-dim);font-family:var(--font-mono);font-size:0.78rem;pointer-events:none;}
+.prefix-wrap input{padding-left:1.4rem;}
+
+/* ── BUTTONS ── */
+.btn{padding:0.58rem 1.1rem;border-radius:var(--r);font-family:var(--font-sans);font-size:0.72rem;font-weight:600;cursor:pointer;border:none;transition:all 0.15s;letter-spacing:0.06em;text-transform:uppercase;display:inline-flex;align-items:center;gap:0.35rem;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:var(--accent2);}
+.btn-primary:disabled{opacity:0.38;cursor:not-allowed;}
+.btn-outline{background:transparent;border:1px solid var(--border-dark);color:var(--text-muted);}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+.btn-gold{background:var(--gold);color:#fff;}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-block{width:100%;justify-content:center;}
+.btn-row{display:flex;gap:0.55rem;align-items:center;margin-top:0.85rem;flex-wrap:wrap;}
+
+/* ── UPLOAD ── */
+.upload-zone{border:1.5px dashed var(--border-dark);border-radius:var(--r-lg);padding:1.25rem;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;background:var(--card);}
+.upload-zone:hover{border-color:var(--accent2);background:var(--accent-light);}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-icon{font-size:1.4rem;margin-bottom:0.3rem;opacity:0.45;}
+.upload-text{font-size:0.72rem;color:var(--text-muted);}
+.upload-text strong{color:var(--text);}
+
+/* ── PHOTO GRID ── */
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(75px,1fr));gap:0.4rem;margin-top:0.65rem;}
+.photo-thumb{aspect-ratio:1;border-radius:var(--r);overflow:hidden;position:relative;border:1px solid var(--border);}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;}
+.photo-thumb .rm{position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:50%;width:16px;height:16px;font-size:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+
+/* ── AI BOX ── */
+.ai-box{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:1rem 1.1rem;font-size:0.8rem;line-height:1.78;color:var(--text-muted);min-height:80px;white-space:pre-wrap;}
+.ai-box.loading{animation:pulse 1.2s ease-in-out infinite;}
+.ai-box.empty{color:var(--text-dim);font-style:italic;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.38;}}
+
+/* ── ARV HERO ── */
+.arv-hero{background:var(--accent);border-radius:var(--r-lg);padding:1.1rem 1.25rem;margin-bottom:1rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.arv-hero-lbl{font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;color:#9bcca8;margin-bottom:0.2rem;}
+.arv-hero-val{font-family:var(--font-display);font-size:1.6rem;color:#fff;line-height:1.15;}
+.arv-hero-range{font-size:0.65rem;color:rgba(255,255,255,0.5);font-family:var(--font-mono);margin-top:0.1rem;}
+
+/* ── METRICS ── */
+.metrics-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:0.65rem;margin-bottom:0.85rem;}
+.metric{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:0.75rem 0.85rem;}
+.metric-lbl{font-size:0.55rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim);margin-bottom:0.28rem;}
+.metric-val{font-family:var(--font-mono);font-size:0.95rem;font-weight:500;color:var(--text);}
+.metric-val.good{color:var(--good);}
+.metric-val.warn{color:var(--warn);}
+.metric-val.bad{color:var(--danger);}
+
+/* ── FLIP CARDS ── */
+.flip-compare{display:grid;grid-template-columns:1fr 1fr;gap:0.85rem;margin-bottom:0.85rem;}
+@media(max-width:480px){.flip-compare{grid-template-columns:1fr;}}
+.flip-card{border-radius:var(--r-lg);border:1px solid var(--border);overflow:hidden;}
+.flip-head{padding:0.65rem 0.9rem;display:flex;align-items:center;justify-content:space-between;}
+.flip-card.easy .flip-head{background:var(--accent-light);border-bottom:1px solid #c5d9ca;}
+.flip-card.full .flip-head{background:var(--blue-light);border-bottom:1px solid #c5cde0;}
+.flip-head-title{font-size:0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;}
+.flip-card.easy .flip-head-title{color:var(--accent);}
+.flip-card.full .flip-head-title{color:var(--blue-dark);}
+.flip-head-mo{font-size:0.6rem;color:var(--text-dim);}
+.flip-body{padding:0.65rem 0.9rem;background:var(--surface);}
+.cost-line{display:flex;justify-content:space-between;align-items:center;padding:0.26rem 0;border-bottom:1px solid var(--border);font-size:0.74rem;}
+.cost-line:last-child{border-bottom:none;}
+.cost-lbl{color:var(--text-muted);}
+.cost-val{font-family:var(--font-mono);font-size:0.72rem;}
+.cost-total-line{display:flex;justify-content:space-between;padding:0.5rem 0 0.2rem;margin-top:0.2rem;border-top:1.5px solid var(--border-dark);}
+.cost-total-line .cost-lbl{font-weight:600;color:var(--text);font-size:0.76rem;}
+.cost-total-line .cost-val{font-size:0.8rem;font-weight:500;}
+.mao-bar{padding:0.6rem 0.9rem;display:flex;justify-content:space-between;align-items:center;}
+.flip-card.easy .mao-bar{background:var(--accent);}
+.flip-card.full .mao-bar{background:var(--blue-dark);}
+.mao-lbl{font-size:0.58rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.7);}
+.mao-val{font-family:var(--font-mono);font-size:1rem;color:#fff;font-weight:500;}
+.profit-bar{padding:0.4rem 0.9rem;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);}
+.profit-lbl{font-size:0.6rem;color:var(--text-dim);}
+.profit-val{font-family:var(--font-mono);font-size:0.78rem;}
+
+/* ── VERDICT ── */
+.verdict{border-radius:var(--r-lg);padding:0.8rem 1rem;border:1.5px solid;display:flex;align-items:flex-start;gap:0.75rem;margin-bottom:0.65rem;}
+.verdict.go{border-color:#3a9e6e;background:var(--good-light);}
+.verdict.caution{border-color:#c49a00;background:var(--warn-light);}
+.verdict.nogo{border-color:#c03030;background:var(--danger-light);}
+.v-badge{font-size:0.56rem;font-weight:700;letter-spacing:0.12em;padding:0.2rem 0.55rem;border-radius:100px;white-space:nowrap;margin-top:0.1rem;}
+.verdict.go .v-badge{background:var(--good);color:#fff;}
+.verdict.caution .v-badge{background:var(--warn);color:#fff;}
+.verdict.nogo .v-badge{background:var(--danger);color:#fff;}
+.v-text{font-size:0.76rem;color:var(--text-muted);line-height:1.6;}
+
+/* ── ARV SUGGEST ── */
+.arv-suggest{background:var(--gold-light);border:1px solid #e0c060;border-radius:var(--r);padding:0.7rem 0.9rem;display:flex;align-items:center;gap:0.85rem;margin-bottom:0.75rem;flex-wrap:wrap;}
+.arv-suggest-lbl{font-size:0.58rem;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:0.12em;white-space:nowrap;}
+.arv-suggest-val{font-family:var(--font-mono);font-size:1rem;font-weight:500;color:var(--text);}
+.arv-suggest-note{font-size:0.7rem;color:var(--text-muted);flex:1;min-width:100px;}
+
+/* ── REHAB ── */
+.rehab-line{display:grid;grid-template-columns:1fr 110px 28px;gap:0.4rem;align-items:center;margin-bottom:0.35rem;}
+.rehab-line input[type=text]{font-size:0.78rem;padding:0.36rem 0.6rem;}
+.rehab-line input[type=number]{font-family:var(--font-mono);font-size:0.78rem;padding:0.36rem 0.55rem;}
+.rehab-rm{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:0.7rem;padding:0.2rem;text-align:center;}
+.rehab-rm:hover{color:var(--danger);}
+
+/* ── DEALS DASHBOARD ── */
+.deals-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;}
+.deal-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;cursor:pointer;transition:border-color 0.15s,transform 0.15s;}
+.deal-card:hover{border-color:var(--accent);transform:translateY(-1px);}
+.deal-card-head{padding:0.85rem 1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;}
+.deal-addr{font-size:0.82rem;font-weight:600;color:var(--text);margin-bottom:0.15rem;}
+.deal-date{font-size:0.62rem;color:var(--text-dim);}
+.deal-badge{font-size:0.55rem;font-weight:700;letter-spacing:0.1em;padding:0.2rem 0.55rem;border-radius:100px;text-transform:uppercase;}
+.deal-badge.go{background:var(--good);color:#fff;}
+.deal-badge.caution{background:var(--warn);color:#fff;}
+.deal-badge.nogo{background:var(--danger);color:#fff;}
+.deal-badge.pending{background:var(--border);color:var(--text-muted);}
+.deal-card-body{padding:0.85rem 1rem;display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem;}
+.deal-stat-lbl{font-size:0.56rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dim);margin-bottom:0.15rem;}
+.deal-stat-val{font-family:var(--font-mono);font-size:0.82rem;font-weight:500;}
+.deal-card-foot{padding:0.55rem 1rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.deal-actions{display:flex;gap:0.4rem;}
+.deal-action-btn{background:none;border:1px solid var(--border);color:var(--text-muted);font-size:0.62rem;padding:0.22rem 0.55rem;border-radius:var(--r);cursor:pointer;font-family:var(--font-sans);}
+.deal-action-btn:hover{border-color:var(--accent);color:var(--accent);}
+.deal-action-btn.del:hover{border-color:var(--danger);color:var(--danger);}
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--text-dim);}
+.empty-state-icon{font-size:2.5rem;margin-bottom:0.75rem;opacity:0.3;}
+
+/* ── SPINNER ── */
+.spin{display:inline-block;width:11px;height:11px;border:1.5px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.6s linear infinite;flex-shrink:0;}
+.spin.dark{border-color:rgba(0,0,0,0.12);border-top-color:var(--accent);}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+hr{border:none;border-top:1px solid var(--border);margin:1rem 0;}
+
+/* ── STATUS BAR ── */
+.status-bar{background:var(--accent-light);border:1px solid #c5d9ca;border-radius:var(--r);padding:0.55rem 0.85rem;font-size:0.75rem;color:var(--accent2);margin-bottom:0.85rem;display:flex;align-items:center;gap:0.5rem;}
+
+/* ── COMP RESULT ── */
+.comp-result{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:0.75rem 0.9rem;margin-bottom:0.5rem;}
+.comp-result-addr{font-size:0.78rem;font-weight:600;color:var(--text);margin-bottom:0.2rem;}
+.comp-result-meta{font-size:0.68rem;font-family:var(--font-mono);color:var(--text-muted);margin-bottom:0.3rem;}
+.comp-result-note{font-size:0.72rem;color:var(--text-muted);line-height:1.6;}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">PropIQ</div>
+    <div class="login-sub">St. Joseph & Elkhart Counties, IN</div>
+    <input type="password" id="loginPwd" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()" />
+    <button class="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="login-err" id="loginErr">Incorrect password — try again</div>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="appShell" style="display:none;">
+
+<header>
+  <div class="logo">PropIQ<span class="logo-sub"> IN</span></div>
+  <div class="header-right">
+    <button class="nav-btn active" id="navDeals" onclick="switchNav('deals')">Deals</button>
+    <button class="nav-btn" id="navNew" onclick="switchNav('new')">+ New Deal</button>
+  </div>
+</header>
+
+<!-- ══ DEALS DASHBOARD ══ -->
+<div id="dealsView" style="display:block;">
+  <div style="max-width:1100px;margin:0 auto;padding:1.25rem;">
+    <div class="section-head">
+      <div class="section-title">Deal Pipeline</div>
+      <div class="section-sub">All saved deals — click any card to continue analysis</div>
+    </div>
+    <div class="deals-grid" id="dealsGrid">
+      <div class="empty-state">
+        <div class="empty-state-icon">🏠</div>
+        <div style="font-size:0.85rem;margin-bottom:0.5rem;">No deals yet</div>
+        <div style="font-size:0.75rem;">Click <strong>+ New Deal</strong> to get started</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ NEW / EDIT DEAL ══ -->
+<div id="dealView" style="display:none;">
+  <div class="stage-nav">
+    <button class="stage-tab active" onclick="showStage('s1',this)" id="tab1"><span class="s-num">1</span>Pre-Visit</button>
+    <button class="stage-tab" onclick="showStage('s2',this)" id="tab2"><span class="s-num">2</span>On-Site</button>
+  </div>
+
+  <!-- ═══ STAGE 1 ═══ -->
+  <div id="s1" class="page active">
+    <div class="section-head">
+      <div class="section-title">Pre-Visit Analysis</div>
+      <div class="section-sub">AI searches live comps and estimates ARV before your rep visits</div>
+    </div>
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <div class="card-title">Subject Property</div>
+          <div class="fg">
+            <label>Property Address</label>
+            <input type="text" id="p1_addr" placeholder="730 S 34th St, South Bend, IN 46615" />
+          </div>
+          <div class="form-row three">
+            <div class="fg"><label>Sq Footage</label><input type="number" id="p1_sqft" placeholder="1248" /></div>
+            <div class="fg"><label>Beds</label><input type="number" id="p1_beds" placeholder="3" /></div>
+            <div class="fg"><label>Baths</label><input type="number" id="p1_baths" placeholder="1.5" step="0.5" /></div>
+          </div>
+          <div class="form-row">
+            <div class="fg"><label>Year Built</label><input type="number" id="p1_year" placeholder="1927" /></div>
+            <div class="fg"><label>Garage</label>
+              <select id="p1_garage">
+                <option value="none">No Garage</option>
+                <option value="1car">1-Car Attached</option>
+                <option value="2car">2-Car Attached</option>
+                <option value="detached">Detached</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="fg"><label>Basement</label>
+              <select id="p1_basement">
+                <option value="none">No Basement</option>
+                <option value="unfinished">Unfinished</option>
+                <option value="partial">Partial</option>
+                <option value="finished">Finished</option>
+              </select>
+            </div>
+            <div class="fg"><label>Neighborhood / Area</label>
+              <input type="text" id="p1_neighborhood" placeholder="e.g. Riverpark, Mishawaka" />
+            </div>
+          </div>
+          <div class="fg">
+            <label>Known Info (optional)</label>
+            <textarea id="p1_notes" placeholder="Estate sale, vacant, motivated seller, corner lot..."></textarea>
+          </div>
+          <button class="btn btn-primary btn-block" onclick="runPreVisit()" id="p1_btn">
+            <span class="spin" id="p1_spin" style="display:none;"></span>Search Comps & Estimate ARV
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <div id="p1_placeholder" class="card">
+          <div style="padding:2.5rem 0;text-align:center;">
+            <div style="font-size:2rem;margin-bottom:0.75rem;opacity:0.25;">🏘️</div>
+            <div style="font-size:0.82rem;color:var(--text-dim);">Enter property details and click<br><strong style="color:var(--text-muted);">Search Comps & Estimate ARV</strong></div>
+          </div>
+        </div>
+
+        <div id="p1_results" style="display:none;">
+          <div class="card">
+            <div class="card-title">AI Valuation</div>
+            <div class="arv-hero">
+              <div><div class="arv-hero-lbl">After Repair Value</div><div class="arv-hero-val" id="p1_arv">—</div><div class="arv-hero-range" id="p1_arv_range">—</div></div>
+              <div><div class="arv-hero-lbl">As-Is Value</div><div class="arv-hero-val" id="p1_asis">—</div><div class="arv-hero-range" id="p1_asis_range">—</div></div>
+            </div>
+            <div style="font-size:0.58rem;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.45rem;">Comps Found</div>
+            <div id="p1_comps_found" style="margin-bottom:0.85rem;"></div>
+            <div style="font-size:0.58rem;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.45rem;">Market Analysis</div>
+            <div class="ai-box empty" id="p1_commentary">—</div>
+            <div style="font-size:0.58rem;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin:0.85rem 0 0.45rem;">Watch Items for Rep</div>
+            <div class="ai-box empty" id="p1_watchitems">—</div>
+            <div style="margin-top:1rem;background:var(--accent-light);border-radius:var(--r);padding:0.65rem 0.85rem;border:1px solid #c5d9ca;">
+              <div style="font-size:0.6rem;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.35rem;">Ready for On-Site?</div>
+              <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:0.55rem;">Pre-fill Part 2 with this property's details and ARV estimate.</div>
+              <button class="btn btn-primary" style="font-size:0.68rem;padding:0.42rem 0.85rem;" onclick="sendToP2()">Continue to On-Site Analysis →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ STAGE 2 ═══ -->
+  <div id="s2" class="page">
+    <div class="section-head">
+      <div class="section-title">On-Site Deal Analysis</div>
+      <div class="section-sub">Rep uploads photos, confirms details, enters rehab — full deal numbers run automatically</div>
+    </div>
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <div class="card-title">Property Details (Rep Confirmed)</div>
+          <div class="fg"><label>Address</label><input type="text" id="p2_addr" placeholder="730 S 34th St, South Bend, IN" /></div>
+          <div class="form-row">
+            <div class="fg"><label>Asking / Purchase Price</label><div class="prefix-wrap"><span class="pfx">$</span><input type="number" id="p2_purchase" placeholder="100000" oninput="recalc()" /></div></div>
+            <div class="fg"><label>ARV</label><div class="prefix-wrap"><span class="pfx">$</span><input type="number" id="p2_arv" placeholder="190000" oninput="recalc()" /></div></div>
+          </div>
+          <div class="form-row four">
+            <div class="fg"><label>Beds</label><input type="number" id="p2_beds" placeholder="3" /></div>
+            <div class="fg"><label>Baths</label><input type="number" id="p2_baths" placeholder="1.5" step="0.5" /></div>
+            <div class="fg"><label>Sq Ft</label><input type="number" id="p2_sqft" placeholder="1248" /></div>
+            <div class="fg"><label>Year Built</label><input type="number" id="p2_year" placeholder="1927" /></div>
+          </div>
+          <div class="fg"><label>Rep Notes</label><textarea id="p2_notes" placeholder="Condition, seller motivation, access issues, anything notable..."></textarea></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Rehab Estimate</div>
+          <div id="rehabLines"></div>
+          <button class="btn btn-outline" onclick="addRehab()" style="font-size:0.67rem;padding:0.32rem 0.75rem;width:100%;margin-top:0.25rem;">+ Add Line Item</button>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.85rem;padding-top:0.7rem;border-top:1px solid var(--border);">
+            <span style="font-size:0.6rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;">Total Rehab</span>
+            <span style="font-family:var(--font-mono);font-size:1.05rem;color:var(--accent);font-weight:500;" id="rehabTotal">$0</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Property Photos</div>
+          <div class="upload-zone">
+            <input type="file" accept="image/*" multiple onchange="handlePhotos(event)" />
+            <div class="upload-icon">📷</div>
+            <div class="upload-text"><strong>Upload property photos</strong><br>Interior, exterior, kitchen, baths, roof</div>
+          </div>
+          <div class="photo-grid" id="p2_photoGrid"></div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="analyzePhotos()" id="p2_photoBtn" disabled>
+              <span class="spin" id="photo_spin" style="display:none;"></span>Analyze Photos & Update ARV
+            </button>
+            <button class="btn btn-outline" onclick="clearPhotos()">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div id="arvSuggestCard" style="display:none;" class="card">
+          <div class="card-title">AI Photo Assessment</div>
+          <div class="arv-suggest">
+            <span class="arv-suggest-lbl">Suggested ARV</span>
+            <span class="arv-suggest-val" id="arvSuggestVal">—</span>
+            <span class="arv-suggest-note" id="arvSuggestNote">—</span>
+            <button class="btn btn-gold" style="font-size:0.63rem;padding:0.28rem 0.65rem;" onclick="acceptArv()">Accept</button>
+          </div>
+          <div class="ai-box empty" id="p2_photo_ai">—</div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Deal Analysis — Fix & Flip</div>
+          <div class="metrics-row">
+            <div class="metric"><div class="metric-lbl">ARV</div><div class="metric-val" id="d_arv">—</div></div>
+            <div class="metric"><div class="metric-lbl">Purchase</div><div class="metric-val" id="d_purchase">—</div></div>
+            <div class="metric"><div class="metric-lbl">Rehab</div><div class="metric-val" id="d_rehab">—</div></div>
+            <div class="metric"><div class="metric-lbl">P + R</div><div class="metric-val" id="d_pr">—</div></div>
+          </div>
+
+          <div class="flip-compare">
+            <div class="flip-card easy">
+              <div class="flip-head"><span class="flip-head-title">Easy Flip</span><span class="flip-head-mo">3 months</span></div>
+              <div class="flip-body">
+                <div class="cost-line"><span class="cost-lbl">Commission (4.5%)</span><span class="cost-val" id="e_comm">—</span></div>
+                <div class="cost-line"><span class="cost-lbl">Points</span><span class="cost-val" id="e_pts">—</span></div>
+                <div class="cost-line"><span class="cost-lbl">Interest (12% / 3mo)</span><span class="cost-val" id="e_int">—</span></div>
+                <div class="cost-line"><span class="cost-lbl">Closing Costs</span><span class="cost-val">$4,000</span></div>
+                <div class="cost-line"><span class="cost-lbl">Holding (1% ARV)</span><span class="cost-val" id="e_hc">—</span></div>
+                <div class="cost-total-line"><span class="cost-lbl">Total Costs</span><span class="cost-val" id="e_total">—</span></div>
+              </div>
+              <div class="mao-bar"><span class="mao-lbl">MAO (min $20k profit)</span><span class="mao-val" id="e_mao">—</span></div>
+              <div class="profit-bar"><span class="profit-lbl">Profit @ asking</span><span class="profit-val" id="e_profit">—</span></div>
+            </div>
+            <div class="flip-card full">
+              <div class="flip-head"><span class="flip-head-title">Full Flip</span><span class="flip-head-mo">5 months</span></div>
+              <div class="flip-body">
+                <div class="cost-line"><span class="cost-lbl">Commission (4.5%)</span><span class="cost-val" id="f_comm">—</span></div>
+                <div class="cost-line"><span class="cost-lbl">Points</span><span class="cost-val" id="f_pts">—</span></div>
+                <div class="cost-line"><span class="cost-lbl">Interest (12% / 5mo)</span><span class="cost-val" id="f_int">—</span></div>
+                <div class="cost-line"><span class="cost-lbl">Closing Costs</span><span class="cost-val">$4,000</span></div>
+                <div class="cost-line"><span class="cost-lbl">Holding (1% ARV)</span><span class="cost-val" id="f_hc">—</span></div>
+                <div class="cost-total-line"><span class="cost-lbl">Total Costs</span><span class="cost-val" id="f_total">—</span></div>
+              </div>
+              <div class="mao-bar" style="background:var(--blue-dark);"><span class="mao-lbl">MAO (min $25k profit)</span><span class="mao-val" id="f_mao">—</span></div>
+              <div class="profit-bar"><span class="profit-lbl">Profit @ asking</span><span class="profit-val" id="f_profit">—</span></div>
+            </div>
+          </div>
+
+          <div id="verdict_easy" class="verdict" style="display:none;"><span class="v-badge" id="vb_easy">—</span><span class="v-text" id="vt_easy">—</span></div>
+          <div id="verdict_full" class="verdict" style="display:none;"><span class="v-badge" id="vb_full">—</span><span class="v-text" id="vt_full">—</span></div>
+
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="runDealAI()" id="dealAiBtn">
+              <span class="spin" id="deal_spin" style="display:none;"></span>Get AI Commentary
+            </button>
+            <button class="btn btn-outline" onclick="saveDeal()">Save Deal</button>
+            <button class="btn btn-outline" onclick="exportReport()">Export</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">AI Deal Commentary</div>
+          <div class="ai-box empty" id="dealAiBox">Enter deal numbers and click "Get AI Commentary" for a full breakdown and offer recommendation.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /dealView -->
+</div><!-- /appShell -->
+
+<script>
+// ══════════════════════════════════════════════
+// CONFIG — swap these when needed
+// ══════════════════════════════════════════════
+const API_KEY = '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';
+const APP_PASSWORD = 'Letsgo!';
+
+// ══════════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════════
+function doLogin() {
+  const pwd = document.getElementById('loginPwd').value;
+  if (pwd === APP_PASSWORD) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appShell').style.display = 'block';
+    renderDeals();
+  } else {
+    document.getElementById('loginErr').style.display = 'block';
+    document.getElementById('loginPwd').value = '';
+  }
+}
+
+// ══════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════
+function switchNav(view) {
+  document.getElementById('dealsView').style.display = view === 'deals' ? 'block' : 'none';
+  document.getElementById('dealView').style.display = view === 'new' ? 'block' : 'none';
+  document.getElementById('navDeals').classList.toggle('active', view === 'deals');
+  document.getElementById('navNew').classList.toggle('active', view === 'new');
+  if (view === 'new') {
+    showStage('s1', document.getElementById('tab1'));
+    resetForms();
+  }
+}
+
+function showStage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.stage-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
+function g(id) { return parseFloat(document.getElementById(id).value) || 0; }
+function fmt(n) { return '$' + Math.round(Math.abs(n)).toLocaleString(); }
+function setEl(id, val) { const e = document.getElementById(id); if (e) e.textContent = val; }
+
+async function callClaude(messages, maxTokens = 1400) {
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': API_KEY,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({ model: 'claude-opus-4-5', max_tokens: maxTokens, messages })
+  });
+  const data = await resp.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.content.filter(c => c.type === 'text').map(c => c.text).join('');
+}
+
+async function searchWeb(query) {
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': API_KEY,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-opus-4-5',
+      max_tokens: 1500,
+      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+      messages: [{ role: 'user', content: query }]
+    })
+  });
+  const data = await resp.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.content.filter(c => c.type === 'text').map(c => c.text).join('') ||
+         data.content.map(c => c.type === 'tool_result' ? JSON.stringify(c) : c.text || '').join('');
+}
+
+// ══════════════════════════════════════════════
+// YOUR ARV LOGIC — BAKED IN
+// ══════════════════════════════════════════════
+const ARV_SYSTEM_PROMPT = `You are a real estate valuation expert who thinks and analyzes exactly like an experienced fix-and-flip investor operating in St. Joseph County and Elkhart County, Indiana.
+
+YOUR VALUATION PHILOSOPHY:
+- Always go HYPER-LOCAL first. South Bend and Elkhart change street by street. Never average across an entire city.
+- Search for sold comps within 0.5 mile first. If fewer than 2 solid comps, expand to 1 mile, then 2 miles. Always note which radius you used.
+- Also check ACTIVE listings and PENDING sales near the subject — these are forward indicators that affect what the rehabbed property will sell for by the time the renovation is complete.
+- Do NOT anchor to the single highest comp — it may be an anomaly. Weight the closest, most similar comps most heavily and look for the middle of a logical range.
+- Price per square foot is your primary metric, but adjust for bed/bath count, garage, basement, and finish level.
+
+STRONG MARKETS — These areas command premium ARVs:
+- St. Joseph County: Riverpark neighborhood (strong, growing, great comps), Mishawaka (strong), Penn-Harris-Madison school district (Penn High School) — these all support higher values
+- Elkhart County: Goshen, Nappanee, Bristol (all strong markets), Concord school district, Jimtown school district — school districts significantly boost value
+- When a property is in one of these areas, make sure your ARV reflects the market strength, not a generic city-wide average
+
+PROPERTY AGE:
+- Pre-1900 construction: Flag as a concern, note it prominently
+- 1900-1960s: No penalty. A fully rehabbed older home trades at market rate. Do not discount for age.
+- Focus on what the home will be AFTER full rehab, not its current age
+
+REHAB ASSUMPTION — Always underwrite to FULL rehab:
+- New kitchen (cabinets, countertops, appliances)
+- Updated bathrooms
+- New flooring throughout
+- Fresh paint interior and exterior
+- This is the standard for all valuations
+
+YOUR INVESTOR'S MODEL:
+- These investors buy distressed properties and sell fully rehabbed at retail
+- NEVER discount ARV because the subject property or neighboring properties are distressed — the rehab changes the equation entirely
+- The comps that matter are the REHABBED homes that have sold, not the distressed ones
+
+COMP EXAMPLES THAT CALIBRATED YOUR THINKING:
+- 730 S 34th St, South Bend (3bd/1.5ba/1248sqft/1927/garage): ARV = $190,000
+- 829 S 29th St, South Bend: sold $196,000 (strong Riverpark area comp)
+- 821 S 34th St, South Bend: sold $192,000 (same street comp)
+- These tell you Riverpark area rehabbed homes at ~1200-1400sqft trade at $150-160/sqft
+
+Always provide your answer in this exact format:
+ARV_LOW: [number only]
+ARV_HIGH: [number only]
+ARV_MID: [number only]
+ASIS_LOW: [number only]
+ASIS_HIGH: [number only]
+ASIS_MID: [number only]
+COMPS_FOUND:
+[List each comp you found: address, sale price, sqft, $/sqft, distance, and 1-sentence note on relevance. Include actives/pendings separately labeled.]
+MARKET_ANALYSIS:
+[3-4 sentences: specific area dynamics, recent price direction, what the comps tell you, school district impact if relevant]
+WATCH_ITEMS:
+[4-6 bullets: what the rep should specifically inspect, age-related concerns, anything that could affect value up or down]`;
+
+// ══════════════════════════════════════════════
+// PART 1 — PRE-VISIT
+// ══════════════════════════════════════════════
+let p1ArvMid = 0, p1AsisMid = 0;
+
+async function runPreVisit() {
+  const addr = document.getElementById('p1_addr').value.trim();
+  const sqft = g('p1_sqft'), beds = g('p1_beds'), baths = g('p1_baths'), year = g('p1_year');
+  const garage = document.getElementById('p1_garage').value;
+  const basement = document.getElementById('p1_basement').value;
+  const neighborhood = document.getElementById('p1_neighborhood').value.trim();
+  const notes = document.getElementById('p1_notes').value.trim();
+
+  if (!addr) { alert('Please enter a property address.'); return; }
+  if (!sqft) { alert('Please enter square footage.'); return; }
+
+  const btn = document.getElementById('p1_btn');
+  const spin = document.getElementById('p1_spin');
+  btn.disabled = true; spin.style.display = 'inline-block';
+
+  document.getElementById('p1_placeholder').style.display = 'none';
+  document.getElementById('p1_results').style.display = 'block';
+  setEl('p1_arv', '...'); setEl('p1_asis', '...');
+  setEl('p1_arv_range', 'Searching comps...');
+  document.getElementById('p1_comps_found').innerHTML = '<div style="font-size:0.75rem;color:var(--text-dim);font-style:italic;">Searching for recent sold comps, actives, and pendings...</div>';
+  document.getElementById('p1_commentary').textContent = 'Analyzing...';
+  document.getElementById('p1_commentary').className = 'ai-box loading';
+  document.getElementById('p1_watchitems').textContent = '...';
+  document.getElementById('p1_watchitems').className = 'ai-box loading';
+
+  const garageDesc = {none:'No garage','1car':'1-car attached garage','2car':'2-car attached garage',detached:'Detached garage'}[garage];
+  const basementDesc = {none:'No basement',unfinished:'Unfinished basement',partial:'Partial basement',finished:'Finished basement'}[basement];
+
+  const searchQuery = `Search for: recent sold home prices near ${addr} Indiana. Also find any active listings or pending sales within 0.5 mile. I need comparable sales for a ${sqft} sqft, ${beds} bed, ${baths} bath home built ${year}. Focus on ${neighborhood || 'this specific neighborhood'}. Find sold prices from the last 6-12 months. Look on Zillow, Redfin, Realtor.com results.`;
+
+  let webResults = '';
+  try {
+    webResults = await searchWeb(searchQuery);
+  } catch(e) {
+    webResults = 'Web search unavailable — using market knowledge only.';
+  }
+
+  const prompt = `${ARV_SYSTEM_PROMPT}
+
+SUBJECT PROPERTY TO ANALYZE:
+Address: ${addr}
+Size: ${sqft} sqft | ${beds} bed / ${baths} bath | Built ${year || 'unknown'}
+Garage: ${garageDesc} | Basement: ${basementDesc}
+Area/Neighborhood: ${neighborhood || 'not specified'}
+Additional context: ${notes || 'none'}
+
+WEB SEARCH RESULTS FOR NEARBY COMPS:
+${webResults}
+
+Using the web search results above AND your knowledge of the St. Joseph/Elkhart County market, provide your valuation following the exact format specified. Remember: hyper-local, weight closest comps most, check for actives/pendings as forward indicators, full rehab assumption.`;
+
+  try {
+    const text = await callClaude([{ role: 'user', content: [{ type: 'text', text: prompt }] }], 1400);
+
+    const ex = (key) => { const m = text.match(new RegExp(key + ':\\s*([\\d,]+)')); return m ? parseInt(m[1].replace(/,/g,'')) : 0; };
+    const arvLow = ex('ARV_LOW'), arvHigh = ex('ARV_HIGH'), arvMid = ex('ARV_MID');
+    const asisLow = ex('ASIS_LOW'), asisHigh = ex('ASIS_HIGH'), asisMid = ex('ASIS_MID');
+
+    p1ArvMid = arvMid || Math.round((arvLow + arvHigh) / 2);
+    p1AsisMid = asisMid || Math.round((asisLow + asisHigh) / 2);
+
+    setEl('p1_arv', p1ArvMid > 0 ? fmt(p1ArvMid) : 'See analysis');
+    setEl('p1_arv_range', arvLow && arvHigh ? `Range: ${fmt(arvLow)} – ${fmt(arvHigh)}` : '');
+    setEl('p1_asis', p1AsisMid > 0 ? fmt(p1AsisMid) : 'See analysis');
+    setEl('p1_asis_range', asisLow && asisHigh ? `Range: ${fmt(asisLow)} – ${fmt(asisHigh)}` : '');
+
+    // Parse sections
+    const compsMatch = text.match(/COMPS_FOUND:\s*([\s\S]*?)(?=MARKET_ANALYSIS:|$)/);
+    const marketMatch = text.match(/MARKET_ANALYSIS:\s*([\s\S]*?)(?=WATCH_ITEMS:|$)/);
+    const watchMatch = text.match(/WATCH_ITEMS:\s*([\s\S]*?)$/);
+
+    // Render comps
+    const compsEl = document.getElementById('p1_comps_found');
+    if (compsMatch && compsMatch[1].trim()) {
+      const lines = compsMatch[1].trim().split('\n').filter(l => l.trim());
+      compsEl.innerHTML = lines.map(line => {
+        const isPending = line.toLowerCase().includes('pending') || line.toLowerCase().includes('active');
+        return `<div class="comp-result"><div class="comp-result-note" style="color:${isPending?'var(--warn)':'var(--text-muted)'};">${line.trim()}</div></div>`;
+      }).join('');
+    } else {
+      compsEl.innerHTML = '<div style="font-size:0.75rem;color:var(--text-dim);font-style:italic;">No specific comps parsed — see market analysis below.</div>';
+    }
+
+    document.getElementById('p1_commentary').textContent = marketMatch ? marketMatch[1].trim() : text;
+    document.getElementById('p1_commentary').className = 'ai-box';
+    document.getElementById('p1_watchitems').textContent = watchMatch ? watchMatch[1].trim() : '—';
+    document.getElementById('p1_watchitems').className = 'ai-box';
+
+  } catch(e) {
+    document.getElementById('p1_commentary').textContent = 'Error: ' + e.message;
+    document.getElementById('p1_commentary').className = 'ai-box';
+  }
+
+  btn.disabled = false; spin.style.display = 'none';
+}
+
+function sendToP2() {
+  document.getElementById('p2_addr').value = document.getElementById('p1_addr').value;
+  document.getElementById('p2_sqft').value = document.getElementById('p1_sqft').value;
+  document.getElementById('p2_beds').value = document.getElementById('p1_beds').value;
+  document.getElementById('p2_baths').value = document.getElementById('p1_baths').value;
+  document.getElementById('p2_year').value = document.getElementById('p1_year').value;
+  if (p1ArvMid > 0) document.getElementById('p2_arv').value = p1ArvMid;
+  showStage('s2', document.getElementById('tab2'));
+  recalc();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ══════════════════════════════════════════════
+// REHAB
+// ══════════════════════════════════════════════
+let rehabItems = [
+  {name:'Kitchen',cost:0},{name:'Bathrooms',cost:0},{name:'Flooring',cost:0},
+  {name:'Roof',cost:0},{name:'HVAC',cost:0},{name:'Electrical',cost:0},
+  {name:'Plumbing',cost:0},{name:'Paint (int/ext)',cost:0},{name:'Windows / Doors',cost:0},{name:'Landscaping',cost:0}
+];
+
+function renderRehab() {
+  const el = document.getElementById('rehabLines');
+  el.innerHTML = '';
+  rehabItems.forEach((item, i) => {
+    const d = document.createElement('div');
+    d.className = 'rehab-line';
+    d.innerHTML = `
+      <input type="text" value="${item.name}" oninput="rehabItems[${i}].name=this.value" />
+      <div class="prefix-wrap"><span class="pfx">$</span>
+        <input type="number" value="${item.cost||''}" placeholder="0" min="0"
+          style="padding-left:1.35rem;"
+          oninput="rehabItems[${i}].cost=parseFloat(this.value)||0;updateRehabTotal();" /></div>
+      <button class="rehab-rm" onclick="rehabItems.splice(${i},1);renderRehab();">✕</button>`;
+    el.appendChild(d);
+  });
+  updateRehabTotal();
+}
+
+function addRehab() { rehabItems.push({name:'New Item',cost:0}); renderRehab(); }
+
+function updateRehabTotal() {
+  const total = rehabItems.reduce((s,r)=>s+(r.cost||0),0);
+  setEl('rehabTotal','$'+total.toLocaleString());
+  recalc();
+}
+
+renderRehab();
+
+// ══════════════════════════════════════════════
+// PHOTOS
+// ══════════════════════════════════════════════
+let p2Photos = [];
+let suggestedArv = 0;
+
+function handlePhotos(e) {
+  Array.from(e.target.files).forEach(f => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      p2Photos.push({dataUrl:ev.target.result,base64:ev.target.result.split(',')[1],type:f.type||'image/jpeg',name:f.name});
+      renderPhotoGrid();
+    };
+    reader.readAsDataURL(f);
+  });
+}
+
+function renderPhotoGrid() {
+  const grid = document.getElementById('p2_photoGrid');
+  grid.innerHTML = '';
+  p2Photos.forEach((p,i) => {
+    const d = document.createElement('div');
+    d.className = 'photo-thumb';
+    d.innerHTML = `<img src="${p.dataUrl}" /><button class="rm" onclick="p2Photos.splice(${i},1);renderPhotoGrid();">✕</button>`;
+    grid.appendChild(d);
+  });
+  document.getElementById('p2_photoBtn').disabled = p2Photos.length === 0;
+}
+
+function clearPhotos() {
+  p2Photos = [];
+  renderPhotoGrid();
+  document.getElementById('p2_photoBtn').disabled = true;
+  document.getElementById('arvSuggestCard').style.display = 'none';
+}
+
+async function analyzePhotos() {
+  const btn = document.getElementById('p2_photoBtn');
+  const spin = document.getElementById('photo_spin');
+  btn.disabled = true; spin.style.display = 'inline-block';
+
+  document.getElementById('arvSuggestCard').style.display = 'block';
+  setEl('arvSuggestVal', '...');
+  setEl('arvSuggestNote', 'Analyzing photos...');
+  document.getElementById('p2_photo_ai').textContent = 'Analyzing property condition and comparing to market...';
+  document.getElementById('p2_photo_ai').className = 'ai-box loading';
+
+  const currentArv = g('p2_arv');
+  const purchase = g('p2_purchase');
+  const rehab = rehabItems.reduce((s,r)=>s+r.cost,0);
+
+  const content = [{
+    type:'text',
+    text:`${ARV_SYSTEM_PROMPT}
+
+You are now analyzing photos of a subject property for on-site assessment.
+
+PROPERTY: ${document.getElementById('p2_addr').value || 'on file'}
+SIZE: ${g('p2_sqft')} sqft | ${g('p2_beds')} bed / ${g('p2_baths')} bath | Built ${g('p2_year')||'unknown'}
+PURCHASE PRICE: $${purchase.toLocaleString()}
+CURRENT ARV ESTIMATE: $${currentArv.toLocaleString()}
+TOTAL REHAB BUDGET: $${rehab.toLocaleString()}
+
+Analyze ALL photos carefully. Provide:
+
+SUGGESTED_ARV: [single number only]
+ARV_REASONING: [1-2 sentences comparing what you see to the market — does the condition support, raise, or lower the current ARV estimate?]
+CONDITION_RATING: [Excellent / Good / Fair / Poor / Gut Job]
+
+CONDITION_REPORT:
+[Room by room / area by area breakdown. Kitchen, bathrooms, flooring, walls, exterior, roof if visible, mechanicals if visible. Note finishes, materials, damage.]
+
+REHAB_SCOPE: [Cosmetic <$15k / Light $15-40k / Medium $40-80k / Heavy $80k+ / Gut Job $100k+]
+
+RED_FLAGS:
+[Serious issues only: foundation, structural, mold/water damage, knob-and-tube wiring, roof failure, etc. Say "None visible" if clean.]
+
+INVESTOR_TAKE:
+[2-3 sentences honest assessment — does what you see support the deal at these numbers?]`
+  }];
+
+  p2Photos.slice(0,6).forEach(p => {
+    content.push({type:'image',source:{type:'base64',media_type:p.type,data:p.base64}});
+  });
+
+  try {
+    const text = await callClaude([{role:'user',content}], 1200);
+    const exLine = (key) => { const m = text.match(new RegExp(key+':\\s*([^\\n]+')); return m?m[1].trim():''; };
+    const arvStr = exLine('SUGGESTED_ARV').replace(/[^0-9]/g,'');
+    suggestedArv = arvStr ? parseInt(arvStr) : currentArv;
+    const reasoning = exLine('ARV_REASONING');
+    const diff = suggestedArv - currentArv;
+
+    setEl('arvSuggestVal', suggestedArv > 0 ? fmt(suggestedArv) : 'See analysis');
+    setEl('arvSuggestNote', reasoning || ((diff!==0 ? (diff>0?'▲ ':'▼ ')+fmt(Math.abs(diff))+' vs current estimate' : 'Consistent with current estimate')));
+
+    const clean = text.replace(/SUGGESTED_ARV:[^\n]+\n?/,'').replace(/ARV_REASONING:[^\n]+\n?/,'').trim();
+    document.getElementById('p2_photo_ai').textContent = clean;
+    document.getElementById('p2_photo_ai').className = 'ai-box';
+  } catch(e) {
+    document.getElementById('p2_photo_ai').textContent = 'Error: ' + e.message;
+    document.getElementById('p2_photo_ai').className = 'ai-box';
+  }
+
+  btn.disabled = false; spin.style.display = 'none';
+}
+
+function acceptArv() {
+  if (suggestedArv > 0) { document.getElementById('p2_arv').value = suggestedArv; recalc(); }
+}
+
+// ══════════════════════════════════════════════
+// DEAL MATH — YOUR EXACT FORMULAS
+// ══════════════════════════════════════════════
+function recalc() {
+  const arv = g('p2_arv'), purchase = g('p2_purchase');
+  const rehab = rehabItems.reduce((s,r)=>s+r.cost,0);
+  const pr = purchase + rehab;
+
+  setEl('d_arv', arv>0 ? fmt(arv) : '—');
+  setEl('d_purchase', purchase>0 ? fmt(purchase) : '—');
+  setEl('d_rehab', '$'+rehab.toLocaleString());
+  setEl('d_pr', pr>0 ? fmt(pr) : '—');
+
+  if (arv<=0 || purchase<=0) return;
+
+  const commission = arv * 0.045;
+  const points = pr < 150000 ? 2750 : pr * 0.01;
+  const hc = arv * 0.01;
+  const closingCosts = 4000;
+
+  // Easy Flip — 3 months
+  const eInt = (pr * 0.12 / 12) * 3;
+  const eCosts = commission + points + eInt + closingCosts + hc;
+  const eMAO = arv - eCosts - 20000;
+  const eProfit = arv - purchase - rehab - eCosts;
+
+  setEl('e_comm', fmt(commission));
+  setEl('e_pts', fmt(points) + (pr < 150000 ? ' (flat)' : ' (1%)'));
+  setEl('e_int', fmt(eInt));
+  setEl('e_hc', fmt(hc));
+  setEl('e_total', fmt(eCosts));
+  setEl('e_mao', fmt(eMAO));
+  setProfit('e_profit', eProfit);
+  setVerdict('verdict_easy','vb_easy','vt_easy', eProfit, eMAO, purchase, 20000, 'Easy Flip');
+
+  // Full Flip — 5 months
+  const fInt = (pr * 0.12 / 12) * 5;
+  const fCosts = commission + points + fInt + closingCosts + hc;
+  const fMAO = arv - fCosts - 25000;
+  const fProfit = arv - purchase - rehab - fCosts;
+
+  setEl('f_comm', fmt(commission));
+  setEl('f_pts', fmt(points) + (pr < 150000 ? ' (flat)' : ' (1%)'));
+  setEl('f_int', fmt(fInt));
+  setEl('f_hc', fmt(hc));
+  setEl('f_total', fmt(fCosts));
+  setEl('f_mao', fmt(fMAO));
+  setProfit('f_profit', fProfit);
+  setVerdict('verdict_full','vb_full','vt_full', fProfit, fMAO, purchase, 25000, 'Full Flip');
+}
+
+function setProfit(id, profit) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = (profit>=0?'+':'-') + fmt(profit);
+  el.style.color = profit>=0 ? 'var(--good)' : 'var(--danger)';
+}
+
+function setVerdict(wrapId, badgeId, textId, profit, mao, purchase, minProfit, label) {
+  const wrap = document.getElementById(wrapId);
+  if (!wrap) return;
+  wrap.style.display = 'flex';
+  let cls, badge, text;
+  if (profit >= minProfit) {
+    cls='go'; badge='GO';
+    text=`${label} pencils at ${fmt(profit)} profit. Purchase is ${purchase<=mao?'at or under MAO':fmt(purchase-mao)+' over MAO'}.`;
+  } else if (profit >= 0) {
+    cls='caution'; badge='CAUTION';
+    text=`${label}: ${fmt(profit)} profit is below the $${(minProfit/1000).toFixed(0)}k minimum. Need to buy at ${fmt(mao)} to hit target.`;
+  } else {
+    cls='nogo'; badge='NO GO';
+    text=`${label} is upside down. MAO is ${fmt(mao)}. Need $${Math.round((purchase-mao)/1000)}k price reduction.`;
+  }
+  wrap.className = 'verdict ' + cls;
+  setEl(badgeId, badge); setEl(textId, text);
+}
+
+// ══════════════════════════════════════════════
+// AI DEAL COMMENTARY
+// ══════════════════════════════════════════════
+async function runDealAI() {
+  const btn = document.getElementById('dealAiBtn');
+  const spin = document.getElementById('deal_spin');
+  const out = document.getElementById('dealAiBox');
+  btn.disabled=true; spin.style.display='inline-block';
+  out.textContent='Building deal commentary...'; out.className='ai-box loading';
+
+  const arv=g('p2_arv'), purchase=g('p2_purchase');
+  const rehab=rehabItems.reduce((s,r)=>s+r.cost,0);
+  const pr=purchase+rehab;
+  const commission=arv*0.045;
+  const points=pr<150000?2750:pr*0.01;
+  const hc=arv*0.01;
+  const eInt=(pr*0.12/12)*3, fInt=(pr*0.12/12)*5;
+  const eCosts=commission+points+eInt+4000+hc;
+  const fCosts=commission+points+fInt+4000+hc;
+  const eMAO=arv-eCosts-20000, fMAO=arv-fCosts-25000;
+  const eProfit=arv-purchase-rehab-eCosts, fProfit=arv-purchase-rehab-fCosts;
+  const rehabList=rehabItems.filter(r=>r.cost>0).map(r=>`${r.name}: $${r.cost.toLocaleString()}`).join(', ');
+  const photoAI=document.getElementById('p2_photo_ai').textContent;
+  const repNotes=document.getElementById('p2_notes').value;
+
+  const prompt = `${ARV_SYSTEM_PROMPT}
+
+Now give a sharp deal review for this fix-and-flip opportunity.
+
+PROPERTY: ${document.getElementById('p2_addr').value||'on file'}
+${g('p2_beds')}bd/${g('p2_baths')}ba/${g('p2_sqft')}sqft | Built ${g('p2_year')||'unknown'}
+ASKING PRICE: $${purchase.toLocaleString()} | ARV: $${arv.toLocaleString()}
+REHAB: $${rehab.toLocaleString()} — ${rehabList||'not broken down'}
+P+R: $${pr.toLocaleString()} → Points: ${pr<150000?'$2,750 flat':'1% = $'+Math.round(points).toLocaleString()}
+
+EASY FLIP (3mo): MAO=$${Math.round(eMAO).toLocaleString()} | Profit@asking=$${Math.round(eProfit).toLocaleString()} | Min target: $20k
+FULL FLIP (5mo): MAO=$${Math.round(fMAO).toLocaleString()} | Profit@asking=$${Math.round(fProfit).toLocaleString()} | Min target: $25k
+
+REP NOTES: ${repNotes||'none'}
+PHOTO ASSESSMENT: ${photoAI.length>100?photoAI.substring(0,500)+'...':'Not yet analyzed'}
+
+Provide:
+1. DEAL SCORE: X/10 with one-sentence verdict
+2. BEST PATH: Easy Flip or Full Flip — which and why
+3. RECOMMENDED OFFER: Specific dollar amount and negotiation approach
+4. TOP RISKS: 2-3 things that could go wrong
+5. BOTTOM LINE: Honest gut-check — would you buy this?
+
+Be direct, specific, and use dollar amounts.`;
+
+  try {
+    const text = await callClaude([{role:'user',content:[{type:'text',text:prompt}]}], 900);
+    out.textContent=text; out.className='ai-box';
+    saveDeal(true);
+  } catch(e) {
+    out.textContent='Error: '+e.message; out.className='ai-box';
+  }
+  btn.disabled=false; spin.style.display='none';
+}
+
+// ══════════════════════════════════════════════
+// DEALS STORAGE
+// ══════════════════════════════════════════════
+function getDeals() {
+  try { return JSON.parse(localStorage.getItem('propiq_deals')||'[]'); } catch(e) { return []; }
+}
+function saveDeals(deals) {
+  localStorage.setItem('propiq_deals', JSON.stringify(deals));
+}
+
+function saveDeal(silent=false) {
+  const addr = document.getElementById('p2_addr').value || document.getElementById('p1_addr').value || 'Unnamed Property';
+  const arv = g('p2_arv'), purchase = g('p2_purchase');
+  const rehab = rehabItems.reduce((s,r)=>s+r.cost,0);
+  const pr = purchase + rehab;
+  const commission = arv*0.045, points = pr<150000?2750:pr*0.01, hc = arv*0.01;
+  const eInt = (pr*0.12/12)*3;
+  const eCosts = commission+points+eInt+4000+hc;
+  const eMAO = arv-eCosts-20000;
+  const eProfit = arv-purchase-rehab-eCosts;
+
+  let status = 'pending';
+  if (arv>0 && purchase>0) {
+    status = eProfit>=20000?'go':eProfit>=0?'caution':'nogo';
+  }
+
+  const deal = {
+    id: Date.now(),
+    addr, arv, purchase, rehab,
+    eMAO: Math.round(eMAO), eProfit: Math.round(eProfit),
+    status,
+    date: new Date().toLocaleDateString(),
+    p1Commentary: document.getElementById('p1_commentary').textContent,
+    dealAI: document.getElementById('dealAiBox').textContent,
+    photoAI: document.getElementById('p2_photo_ai').textContent,
+    rehabItems: JSON.parse(JSON.stringify(rehabItems)),
+    beds: g('p2_beds'), baths: g('p2_baths'), sqft: g('p2_sqft'), year: g('p2_year'),
+    notes: document.getElementById('p2_notes').value
+  };
+
+  const deals = getDeals();
+  const existing = deals.findIndex(d => d.addr === addr);
+  if (existing >= 0) { deals[existing] = deal; } else { deals.unshift(deal); }
+  saveDeals(deals);
+  if (!silent) { alert('Deal saved!'); renderDeals(); }
+  renderDeals();
+}
+
+function renderDeals() {
+  const deals = getDeals();
+  const grid = document.getElementById('dealsGrid');
+  if (deals.length === 0) {
+    grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🏠</div><div style="font-size:0.85rem;margin-bottom:0.5rem;">No deals yet</div><div style="font-size:0.75rem;">Click <strong>+ New Deal</strong> to get started</div></div>';
+    return;
+  }
+  grid.innerHTML = deals.map(d => `
+    <div class="deal-card" onclick="loadDeal(${d.id})">
+      <div class="deal-card-head">
+        <div><div class="deal-addr">${d.addr}</div><div class="deal-date">${d.date}</div></div>
+        <span class="deal-badge ${d.status}">${d.status==='go'?'GO':d.status==='caution'?'CAUTION':d.status==='nogo'?'NO GO':'PENDING'}</span>
+      </div>
+      <div class="deal-card-body">
+        <div><div class="deal-stat-lbl">ARV</div><div class="deal-stat-val">${d.arv>0?'$'+d.arv.toLocaleString():'—'}</div></div>
+        <div><div class="deal-stat-lbl">Purchase</div><div class="deal-stat-val">${d.purchase>0?'$'+d.purchase.toLocaleString():'—'}</div></div>
+        <div><div class="deal-stat-lbl">Easy Profit</div><div class="deal-stat-val" style="color:${d.eProfit>=20000?'var(--good)':d.eProfit>=0?'var(--warn)':'var(--danger)'}">${d.eProfit?'$'+Math.abs(d.eProfit).toLocaleString():'—'}</div></div>
+      </div>
+      <div class="deal-card-foot">
+        <div style="font-size:0.65rem;color:var(--text-dim);">MAO: ${d.eMAO?'$'+d.eMAO.toLocaleString():'—'} | Rehab: ${d.rehab?'$'+d.rehab.toLocaleString():'—'}</div>
+        <div class="deal-actions">
+          <button class="deal-action-btn" onclick="event.stopPropagation();loadDeal(${d.id})">Open</button>
+          <button class="deal-action-btn del" onclick="event.stopPropagation();deleteDeal(${d.id})">Delete</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function loadDeal(id) {
+  const deals = getDeals();
+  const d = deals.find(x=>x.id===id);
+  if (!d) return;
+  switchNav('new');
+
+  document.getElementById('p1_addr').value = d.addr;
+  document.getElementById('p2_addr').value = d.addr;
+  document.getElementById('p2_arv').value = d.arv||'';
+  document.getElementById('p2_purchase').value = d.purchase||'';
+  document.getElementById('p2_beds').value = d.beds||'';
+  document.getElementById('p2_baths').value = d.baths||'';
+  document.getElementById('p2_sqft').value = d.sqft||'';
+  document.getElementById('p2_year').value = d.year||'';
+  document.getElementById('p2_notes').value = d.notes||'';
+
+  if (d.rehabItems) { rehabItems = JSON.parse(JSON.stringify(d.rehabItems)); renderRehab(); }
+
+  if (d.dealAI && d.dealAI.length > 20) {
+    document.getElementById('dealAiBox').textContent = d.dealAI;
+    document.getElementById('dealAiBox').className = 'ai-box';
+  }
+  if (d.photoAI && d.photoAI.length > 20) {
+    document.getElementById('p2_photo_ai').textContent = d.photoAI;
+    document.getElementById('p2_photo_ai').className = 'ai-box';
+    document.getElementById('arvSuggestCard').style.display = 'block';
+    setEl('arvSuggestVal','Saved');
+    setEl('arvSuggestNote','Loaded from saved deal');
+  }
+
+  showStage('s2', document.getElementById('tab2'));
+  recalc();
+}
+
+function deleteDeal(id) {
+  if (!confirm('Delete this deal?')) return;
+  const deals = getDeals().filter(d=>d.id!==id);
+  saveDeals(deals);
+  renderDeals();
+}
+
+// ══════════════════════════════════════════════
+// EXPORT
+// ══════════════════════════════════════════════
+function exportReport() {
+  const addr = document.getElementById('p2_addr').value||'Property';
+  const arv=g('p2_arv'), purchase=g('p2_purchase');
+  const rehab=rehabItems.reduce((s,r)=>s+r.cost,0);
+  const pr=purchase+rehab;
+  const commission=arv*0.045, points=pr<150000?2750:pr*0.01, hc=arv*0.01;
+  const eInt=(pr*0.12/12)*3, fInt=(pr*0.12/12)*5;
+  const eCosts=commission+points+eInt+4000+hc, fCosts=commission+points+fInt+4000+hc;
+  const eMAO=arv-eCosts-20000, fMAO=arv-fCosts-25000;
+  const eProfit=arv-purchase-rehab-eCosts, fProfit=arv-purchase-rehab-fCosts;
+  const rehabRows=rehabItems.filter(r=>r.cost>0).map(r=>`<tr><td>${r.name}</td><td style="text-align:right;font-family:monospace">$${r.cost.toLocaleString()}</td></tr>`).join('');
+  const photoAI=document.getElementById('p2_photo_ai').textContent;
+  const dealAI=document.getElementById('dealAiBox').textContent;
+
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>${addr} — PropIQ</title>
+  <style>body{font-family:Georgia,serif;max-width:800px;margin:2rem auto;color:#1c1a16;font-size:14px;padding:0 1rem;}
+  h1{font-size:1.6rem;margin-bottom:0.2rem;}
+  .meta{color:#666;font-size:0.78rem;margin-bottom:1.5rem;border-bottom:1px solid #ddd;padding-bottom:0.65rem;}
+  h2{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;color:#555;border-bottom:1px solid #eee;padding-bottom:0.3rem;margin:1.5rem 0 0.65rem;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:0.65rem;margin-bottom:1rem;}
+  .m{background:#f8f7f4;padding:0.65rem 0.85rem;border-radius:6px;}
+  .ml{font-size:0.58rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;margin-bottom:0.18rem;}
+  .mv{font-size:0.95rem;font-weight:bold;font-family:monospace;}
+  .flip{border:1px solid #ddd;border-radius:8px;overflow:hidden;margin-bottom:0.85rem;}
+  .fh{padding:0.5rem 0.9rem;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.1em;display:flex;justify-content:space-between;}
+  table{width:100%;border-collapse:collapse;font-size:0.8rem;}
+  td{padding:0.28rem 0.5rem;border-bottom:1px solid #eee;}
+  .mao{padding:0.55rem 0.9rem;display:flex;justify-content:space-between;font-weight:bold;font-family:monospace;}
+  .profit{padding:0.4rem 0.9rem;display:flex;justify-content:space-between;font-size:0.8rem;border-top:1px solid #eee;}
+  pre{white-space:pre-wrap;font-family:Georgia,serif;font-size:0.78rem;line-height:1.7;background:#f8f7f4;padding:0.85rem;border-radius:6px;border:1px solid #eee;}
+  @media print{body{margin:0.5rem;}}</style></head><body>
+  <h1>${addr}</h1>
+  <div class="meta">Fix & Flip | St. Joseph / Elkhart County, IN | ${new Date().toLocaleDateString()} | PropIQ</div>
+  <h2>Key Numbers</h2>
+  <div class="grid">
+    <div class="m"><div class="ml">Purchase Price</div><div class="mv">$${purchase.toLocaleString()}</div></div>
+    <div class="m"><div class="ml">ARV</div><div class="mv">$${arv.toLocaleString()}</div></div>
+    <div class="m"><div class="ml">Total Rehab</div><div class="mv">$${rehab.toLocaleString()}</div></div>
+    <div class="m"><div class="ml">P + R</div><div class="mv">$${pr.toLocaleString()}</div></div>
+  </div>
+  ${rehabRows?`<h2>Rehab Breakdown</h2><table>${rehabRows}<tr><td><strong>Total</strong></td><td style="text-align:right;font-family:monospace;font-weight:bold">$${rehab.toLocaleString()}</td></tr></table>`:''}
+  <h2>Easy Flip — 3 Months</h2>
+  <div class="flip">
+    <div class="fh" style="background:#e8f0eb;"><span style="color:#1a3a2a">Easy Flip</span><span style="color:#666">3 months</span></div>
+    <table>
+      <tr><td>Commission (4.5%)</td><td style="text-align:right;font-family:monospace">$${Math.round(commission).toLocaleString()}</td></tr>
+      <tr><td>Points</td><td style="text-align:right;font-family:monospace">$${Math.round(points).toLocaleString()}</td></tr>
+      <tr><td>Interest (3mo @ 12%)</td><td style="text-align:right;font-family:monospace">$${Math.round(eInt).toLocaleString()}</td></tr>
+      <tr><td>Closing Costs</td><td style="text-align:right;font-family:monospace">$4,000</td></tr>
+      <tr><td>Holding (1% ARV)</td><td style="text-align:right;font-family:monospace">$${Math.round(hc).toLocaleString()}</td></tr>
+      <tr><td><strong>Total Costs</strong></td><td style="text-align:right;font-family:monospace;font-weight:bold">$${Math.round(eCosts).toLocaleString()}</td></tr>
+    </table>
+    <div class="mao" style="background:#1a3a2a;color:#fff"><span>MAO (min $20k profit)</span><span>$${Math.round(eMAO).toLocaleString()}</span></div>
+    <div class="profit"><span>Profit @ asking price</span><span style="font-family:monospace;font-weight:bold;color:${eProfit>=20000?'#1a5232':eProfit>=0?'#8a6200':'#b83232'}">$${Math.round(eProfit).toLocaleString()}</span></div>
+  </div>
+  <h2>Full Flip — 5 Months</h2>
+  <div class="flip">
+    <div class="fh" style="background:#eef1f9;"><span style="color:#1e3260">Full Flip</span><span style="color:#666">5 months</span></div>
+    <table>
+      <tr><td>Commission (4.5%)</td><td style="text-align:right;font-family:monospace">$${Math.round(commission).toLocaleString()}</td></tr>
+      <tr><td>Points</td><td style="text-align:right;font-family:monospace">$${Math.round(points).toLocaleString()}</td></tr>
+      <tr><td>Interest (5mo @ 12%)</td><td style="text-align:right;font-family:monospace">$${Math.round(fInt).toLocaleString()}</td></tr>
+      <tr><td>Closing Costs</td><td style="text-align:right;font-family:monospace">$4,000</td></tr>
+      <tr><td>Holding (1% ARV)</td><td style="text-align:right;font-family:monospace">$${Math.round(hc).toLocaleString()}</td></tr>
+      <tr><td><strong>Total Costs</strong></td><td style="text-align:right;font-family:monospace;font-weight:bold">$${Math.round(fCosts).toLocaleString()}</td></tr>
+    </table>
+    <div class="mao" style="background:#1e3260;color:#fff"><span>MAO (min $25k profit)</span><span>$${Math.round(fMAO).toLocaleString()}</span></div>
+    <div class="profit"><span>Profit @ asking price</span><span style="font-family:monospace;font-weight:bold;color:${fProfit>=25000?'#1a5232':fProfit>=0?'#8a6200':'#b83232'}">$${Math.round(fProfit).toLocaleString()}</span></div>
+  </div>
+  ${photoAI&&photoAI.length>50?`<h2>AI Photo Assessment</h2><pre>${photoAI}</pre>`:''}
+  ${dealAI&&dealAI.length>50?`<h2>AI Deal Commentary</h2><pre>${dealAI}</pre>`:''}
+  <script>setTimeout(()=>window.print(),500);<\/script></body></html>`);
+}
+
+// ══════════════════════════════════════════════
+// RESET
+// ══════════════════════════════════════════════
+function resetForms() {
+  ['p1_addr','p1_sqft','p1_beds','p1_baths','p1_year','p1_neighborhood','p1_notes',
+   'p2_addr','p2_purchase','p2_arv','p2_beds','p2_baths','p2_sqft','p2_year','p2_notes'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('p1_placeholder').style.display='block';
+  document.getElementById('p1_results').style.display='none';
+  document.getElementById('arvSuggestCard').style.display='none';
+  document.getElementById('dealAiBox').textContent='Enter deal numbers and click "Get AI Commentary" for a full breakdown and offer recommendation.';
+  document.getElementById('dealAiBox').className='ai-box empty';
+  document.getElementById('p2_photo_ai').textContent='—';
+  document.getElementById('p2_photo_ai').className='ai-box empty';
+  p2Photos=[]; p1ArvMid=0; p1AsisMid=0; suggestedArv=0;
+  rehabItems=[
+    {name:'Kitchen',cost:0},{name:'Bathrooms',cost:0},{name:'Flooring',cost:0},
+    {name:'Roof',cost:0},{name:'HVAC',cost:0},{name:'Electrical',cost:0},
+    {name:'Plumbing',cost:0},{name:'Paint (int/ext)',cost:0},{name:'Windows / Doors',cost:0},{name:'Landscaping',cost:0}
+  ];
+  renderRehab(); renderPhotoGrid();
+  ['verdict_easy','verdict_full'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
+  ['d_arv','d_purchase','d_rehab','d_pr','e_comm','e_pts','e_int','e_hc','e_total','e_mao','e_profit','f_comm','f_pts','f_int','f_hc','f_total','f_mao','f_profit'].forEach(id=>setEl(id,'—'));
+}
+</script>
+</body>
+</html>
